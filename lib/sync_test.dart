@@ -2,16 +2,23 @@ import 'dart:io';
 
 import 'package:path/path.dart';
 
-Future<void> sync() async {
+Future<void> sync(
+    {Directory? mainFilesDirectory, Directory? testFilesDirectory}) async {
   // Define the directories
-  final libDir = Directory('lib');
-  final testDir = Directory('test');
+  final libDir = mainFilesDirectory ?? Directory('lib');
+  final testDir = testFilesDirectory ?? Directory('test');
 
   // Check if directories exist
-  if (!await libDir.exists() || !await testDir.exists()) {
-    stderr.writeln('lib/ or test/ directory does not exist.');
+  if(!await libDir.exists()) {
+    stderr.writeln('lib/ directory does not exist.');
     exit(1);
   }
+
+  if(!await testDir.exists()) {
+    stderr.writeln('test/ directory does not exist.');
+    exit(1);
+  }
+
 
   // Find all Dart test files in the test directory
   final testFiles = testDir
