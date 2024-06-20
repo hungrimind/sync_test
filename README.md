@@ -10,11 +10,26 @@ think of the following scenario:
 
 The script is runnable to move the file to match the new location of the lib file.
 
+## How to Install
+
+### Using `make`
+
+1. Clone the repo
+2. Run `make install` in the root of the project
+   - This will install the script `sync_test` globally
+
+### Manually
+
+1. Clone the repo
+2. Run `dart pub get` in the root of the project
+3. Run `dart pub global activate . --source path --overwrite` in the root of the project
+   - This will install the script `sync_test` globally
+
 ## How to run
 
 1. clone the repo
 2. locate yourself in the root of your project that you want to sync
-3. run: `dart run path/to/sync_test.dart`
+3. run: `sync_test`
 
 **Note:** Replace path/to/sync_test.dart with the actual path to this cloned script.
 
