@@ -1,6 +1,7 @@
-import 'package:sync_test/sync_test.dart' as sync_test;
+import 'package:sync_test/sync_test.dart';
 
 void main(List<String> arguments) async {
-  await sync_test.sync();
+  final fileSyncer = FileSyncer();
+  await fileSyncer.sync();
 }
 

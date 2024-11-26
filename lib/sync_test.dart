@@ -1,66 +1,94 @@
 import 'dart:io';
-
 import 'package:path/path.dart';
 
-Future<void> sync(
-    {Directory? mainFilesDirectory, Directory? testFilesDirectory}) async {
-  // Define the directories
-  final libDir = mainFilesDirectory ?? Directory('lib');
-  final testDir = testFilesDirectory ?? Directory('test');
+class FileSyncer {
+  final Directory libDir;
+  final Directory testDir;
 
-  // Check if directories exist
-  if(!await libDir.exists()) {
-    stderr.writeln('lib/ directory does not exist.');
-    exit(1);
+  FileSyncer({
+    Directory? mainFilesDirectory,
+    Directory? testFilesDirectory,
+  })  : libDir = mainFilesDirectory ?? Directory('lib'),
+        testDir = testFilesDirectory ?? Directory('test');
+
+  Future<void> sync() async {
+    _validateDirectories([libDir, testDir]);
+    final testFiles = await _findFiles(testDir, '_test.dart');
+
+    for (final testFile in testFiles) {
+      await _processTestFile(testFile);
+    }
+
+    print('Sync complete.');
   }
 
-  if(!await testDir.exists()) {
-    stderr.writeln('test/ directory does not exist.');
-    exit(1);
-  }
-
-
-  // Find all Dart test files in the test directory
-  final testFiles = testDir
-      .list(recursive: true)
-      .where((file) => file.path.endsWith('_test.dart'));
-
-  await for (var testFile in testFiles) {
-    final relativeTestFilePath = basename(testFile.path);
-
-    // Find the source file
-    await for (var correspondingLibFile in libDir.list(recursive: true)) {
-      if (_isLibFileMatched(correspondingLibFile, relativeTestFilePath)) {
-        final newTestFileDir = correspondingLibFile.parent.path
-            .replaceAll(libDir.path, testDir.path);
-
-        final newTestFilePath =
-            '$newTestFileDir/${basename(correspondingLibFile.path).replaceAll('.dart', '_test.dart')}';
-
-        if (testFile.path != newTestFilePath) {
-          // Check if the target file already exists
-          if (await File(newTestFilePath).exists()) {
-            print(
-                'Skipping rename: Target file already exists: $newTestFilePath');
-          } else {
-            // Create the directory if it doesn't exist
-            await Directory(newTestFileDir).create(recursive: true);
-
-            await testFile.rename(newTestFilePath);
-            print('Moved: $testFile.path to $newTestFilePath');
-          }
-        }
-
-        break;
+  void _validateDirectories(List<Directory> directories) {
+    for (final dir in directories) {
+      if (!dir.existsSync()) {
+        stderr.writeln('${dir.path} does not exist.');
+        exit(1);
       }
     }
   }
 
-  print('Sync complete.');
-}
+  Future<List<File>> _findFiles(Directory dir, String suffix) async {
+    final files = <File>[];
+    await for (var entity in dir.list(recursive: true)) {
+      if (entity is File && entity.path.endsWith(suffix)) {
+        files.add(entity);
+      }
+    }
+    return files;
+  }
 
-bool _isLibFileMatched(FileSystemEntity file, String relativeTestFilePath) {
-  return file.path.endsWith(
-    basename(relativeTestFilePath).replaceAll('_test.dart', '.dart'),
-  );
+  Future<void> _processTestFile(File testFile) async {
+    final relativeTestFileName = basename(testFile.path);
+    final correspondingLibFile =
+        await _findMatchingLibFile(relativeTestFileName);
+
+    if (correspondingLibFile == null) {
+      return; // No matching lib file, skip this test file
+    }
+
+    final newTestFilePath = _getNewTestFilePath(correspondingLibFile);
+
+    if (testFile.path != newTestFilePath) {
+      await _moveTestFile(testFile, newTestFilePath);
+    }
+  }
+
+  Future<File?> _findMatchingLibFile(String testFileName) async {
+    final libFileName = testFileName.replaceAll('_test.dart', '.dart');
+
+    await for (var entity in libDir.list(recursive: true)) {
+      if (entity is File && basename(entity.path) == libFileName) {
+        return entity;
+      }
+    }
+
+    return null;
+  }
+
+  String _getNewTestFilePath(File libFile) {
+    final newTestDirPath =
+        libFile.parent.path.replaceFirst(libDir.path, testDir.path);
+    final newTestFileName =
+        basename(libFile.path).replaceAll('.dart', '_test.dart');
+    return join(newTestDirPath, newTestFileName);
+  }
+
+  Future<void> _moveTestFile(File testFile, String newTestFilePath) async {
+    final newTestDir = Directory(dirname(newTestFilePath));
+
+    if (!newTestDir.existsSync()) {
+      await newTestDir.create(recursive: true);
+    }
+
+    if (await File(newTestFilePath).exists()) {
+      print('Skipping rename: Target file already exists: $newTestFilePath');
+    } else {
+      await testFile.rename(newTestFilePath);
+      print('Moved: ${testFile.path} to $newTestFilePath');
+    }
+  }
 }

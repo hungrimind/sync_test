@@ -1,14 +1,16 @@
 # Sync Test
 
-Fun small project that will match test file location to their respective lib file
+Fun small project that will match test file location to their respective lib file.
 
-think of the following scenario:
+### Why Sync Test?
 
-1. You have a lib/ file with the following path: `lib/src/utils/strings.dart` and a matching test file in `test/src/utils/strings_test.dart`.
-2. You now move the lib/ file from `lib/src/utils/strings.dart` to `lib/src/strings.dart`.
+Imagine this scenario:
+
+1. You have a lib/ file with the following path: `lib/utils/strings.dart` and a matching test file in `test/utils/strings_test.dart`.
+2. You now move the lib/ file from `lib/utils/strings.dart` to `lib/strings.dart`.
 3. You now have a test file that is not matching the lib file anymore.
 
-The script is runnable to move the file to match the new location of the lib file.
+The script is runnable to move the test file to match the new location of the lib file.
 
 ## How to Install
 
@@ -27,13 +29,19 @@ The script is runnable to move the file to match the new location of the lib fil
 
 ## How to run
 
-1. clone the repo
-2. locate yourself in the root of your project that you want to sync
-3. run: `sync_test`
-
-**Note:** Replace path/to/sync_test.dart with the actual path to this cloned script.
+1. locate yourself in the root of your project that you want to sync
+2. run: `sync_test`
 
 ### limitations
 
 - It will **not** update file imports
 - It will **only** find exact file name matches
+
+
+## Related Projects
+
+If you found this project useful, you might also be interested in **[The Best Flutter Course On The Internet](https://hungrimind.com/learn/flutter)**.
+
+---
+
+Your support helps me create more useful open-source projects like this one. Thank you!
